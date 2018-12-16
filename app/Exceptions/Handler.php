@@ -4,8 +4,12 @@ namespace App\Exceptions;
 
 use App\Traits\ApiResponse;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -53,6 +57,30 @@ class Handler extends ExceptionHandler
             return $this->convertValidationExceptionToResponse($exception, $request
             );
         }
+
+        if ($exception instanceof NotFoundHttpException) {
+            return $this->errorResponse('Does not exist any endpoint for this url', $exception->getStatusCode());
+        }
+
+        if ($exception instanceof MethodNotAllowedHttpException) {
+            return $this->errorResponse('HTTP method does not match with any endpoint', $exception->getStatusCode());
+        }
+
+        if ($exception instanceof  ModelNotFoundException)
+        {
+            $modelName = strtolower(class_basename($exception->getModel()));
+            return $this->errorResponse("Does not exists any instance of $modelName with the specify id", 404);
+        }
+
+        if ($exception instanceof  HttpException)
+        {
+            return $this->errorResponse($exception->getMessage(), $exception->getStatusCode());
+        }
+
+        if (config('app.debug')){
+            return $this->errorResponse('Unexpected error', 500);
+        }
+
         return parent::render($request, $exception);
     }
 
