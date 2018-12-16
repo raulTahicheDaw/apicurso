@@ -87,10 +87,15 @@ class SellerProductController extends Controller
      * @param  \App\Seller $seller
      * @param  \App\Product $product
      * @return \Illuminate\Http\Response
+     * @throws \Exception
      */
     public function destroy(Seller $seller, Product $product)
     {
-        //
+        $this->checkSeller($seller, $product);
+
+        $product->delete();
+
+        return $this->showOne($product);
     }
 
     private function checkSeller(Seller $seller, Product $product)
